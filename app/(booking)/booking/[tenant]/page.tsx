@@ -36,7 +36,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
 
   if (!tenant) notFound();
 
-  const availableWeekdays = [...new Set(tenant.availabilityRules.map((r) => r.dayOfWeek))];
+  const availableWeekdays = [...new Set(tenant.availabilityRules.map((r: { dayOfWeek: number }) => r.dayOfWeek))];
 
   const services = tenant.services.map((s) => ({
     id: s.id,
