@@ -1,0 +1,301 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─────────────────────────────────────────
+// TENANT (empresa cliente white-label)
+// ─────────────────────────────────────────
+model Tenant {
+  id             String   @id @default(cuid())
+  slug           String   @unique  // subdominio: slug.tuproducto.com
+  name           String
+  logoUrl        String?
+  primaryColor   String   @default("#6366f1")
+  accentColor    String   @default("#f59e0b")
+  customDomain   String?  @unique
+  sector         String   @default("general") // general | medical | legal | education | beauty | fitness
+  plan           String   @default("starter")  // starter | pro | enterprise
+  isActive       Boolean  @default(true)
+  config         String   @default("{}")       // config extra por sector (JSON string)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relaciones
+  users                    User[]
+  services                 Service[]
+  appointments             Appointment[]
+  clients                  Client[]
+  availabilityRules        AvailabilityRule[]
+  automations              Automation[]
+  integrationCredentials   IntegrationCredential[]
+  pipelineStages           PipelineStage[]
+  notifications            Notification[]
+
+  @@map("tenants")
+}
+
+// ─────────────────────────────────────────
+// USER (staff / admin del tenant)
+// ─────────────────────────────────────────
+model User {
+  id            String   @id @default(cuid())
+  tenantId      String
+  name          String
+  email         String
+  emailVerified DateTime?
+  password      String?
+  avatarUrl     String?
+  role          UserRole @default(STAFF)
+  timezone      String   @default("America/Bogota")
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // NextAuth
+  accounts Account[]
+  sessions Session[]
+
+  tenant               Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointments         Appointment[]     @relation("AppointmentStaff")
+  availabilityRules    AvailabilityRule[]
+
+  @@unique([tenantId, email])
+  @@map("users")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+  VIEWER
+}
+
+// ─────────────────────────────────────────
+// NextAuth Models
+// ─────────────────────────────────────────
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─────────────────────────────────────────
+// SERVICE (servicios que ofrece el tenant)
+// ─────────────────────────────────────────
+model Service {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  description String?
+  durationMin Int      @default(30)    // duración en minutos
+  price       Float    @default(0)
+  currency    String   @default("COP")
+  color       String   @default("#6366f1")
+  isActive    Boolean  @default(true)
+  bookingQuestions String @default("[]") // preguntas personalizadas al agendar (JSON array)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@map("services")
+}
+
+// ─────────────────────────────────────────
+// AVAILABILITY RULE (horarios disponibles)
+// ─────────────────────────────────────────
+model AvailabilityRule {
+  id        String  @id @default(cuid())
+  tenantId  String
+  userId    String?             // null = regla del tenant, definida = regla del staff
+  dayOfWeek Int                 // 0=Dom, 1=Lun, ... 6=Sab
+  startTime String              // "09:00"
+  endTime   String              // "18:00"
+  isActive  Boolean @default(true)
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("availability_rules")
+}
+
+// ─────────────────────────────────────────
+// CLIENT (lead / cliente del tenant)
+// ─────────────────────────────────────────
+model Client {
+  id             String        @id @default(cuid())
+  tenantId       String
+  name           String
+  email          String?
+  phone          String?
+  company        String?
+  notes          String?
+  pipelineStageId String?
+  source         ClientSource  @default(BOOKING)
+  tags           String        @default("")     // JSON string serializado
+  customFields   String        @default("{}")   // campos extra por sector (JSON string)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pipelineStage  PipelineStage? @relation(fields: [pipelineStageId], references: [id])
+  appointments   Appointment[]
+
+  @@map("clients")
+}
+
+enum ClientSource {
+  BOOKING    // agendó desde la página pública
+  MANUAL     // creado manualmente por staff
+  IMPORT     // importado
+  API        // via API
+}
+
+// ─────────────────────────────────────────
+// PIPELINE STAGE (etapas del CRM)
+// ─────────────────────────────────────────
+model PipelineStage {
+  id       String  @id @default(cuid())
+  tenantId String
+  name     String
+  color    String  @default("#6366f1")
+  order    Int
+  isActive Boolean @default(true)
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  clients Client[]
+
+  @@map("pipeline_stages")
+}
+
+// ─────────────────────────────────────────
+// APPOINTMENT (cita / reunión)
+// ─────────────────────────────────────────
+model Appointment {
+  id          String            @id @default(cuid())
+  tenantId    String
+  clientId    String
+  staffId     String?
+  serviceId   String?
+  startsAt    DateTime
+  endsAt      DateTime
+  status      AppointmentStatus @default(PENDING)
+  meetingUrl  String?
+  notes       String?
+  clientNotes String?           // notas del cliente al agendar
+  formData    String            @default("{}") // respuestas a preguntas personalizadas del booking
+  metadata    String            @default("{}")
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  client  Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  staff   User?    @relation("AppointmentStaff", fields: [staffId], references: [id])
+  service Service? @relation(fields: [serviceId], references: [id])
+
+  @@map("appointments")
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+// ─────────────────────────────────────────
+// AUTOMATION (motor de automatizaciones)
+// ─────────────────────────────────────────
+model Automation {
+  id            String   @id @default(cuid())
+  tenantId      String
+  name          String
+  triggerEvent  String   // appointment.created | appointment.confirmed | appointment.reminder_24h | lead.created | lead.stage_changed
+  triggerConfig String   @default("{}")
+  actions       String   @default("[]")  // JSON string
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("automations")
+}
+
+// ─────────────────────────────────────────
+// INTEGRATION CREDENTIALS
+// ─────────────────────────────────────────
+model IntegrationCredential {
+  id        String   @id @default(cuid())
+  tenantId  String
+  provider  String   // google | zoom | whatsapp
+  tokens    String   @default("{}")  // JSON string
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, provider])
+  @@map("integration_credentials")
+}
+
+// ─────────────────────────────────────────
+// NOTIFICATION (centro de notificaciones del panel)
+// ─────────────────────────────────────────
+model Notification {
+  id        String   @id @default(cuid())
+  tenantId  String
+  type      String   // appointment.created | appointment.cancelled | appointment.confirmed | appointment.completed
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, isRead])
+  @@map("notifications")
+}
