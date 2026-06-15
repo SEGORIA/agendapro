@@ -34,7 +34,7 @@ export default async function DashboardLayout({
   return (
     <SessionProvider session={session}>
       <div className="flex h-screen bg-slate-900 overflow-hidden">
-        <Sidebar tenant={tenant} user={user || {}} role={session.user.role} />
+        <Sidebar tenant={tenant} user={user || {}} role={session.user.role} impersonating={!!session.user.impersonating} />
         <main className="flex-1 overflow-y-auto">
           <div className="flex items-center justify-between px-8 py-3 border-b border-slate-800 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-40">
             <div>

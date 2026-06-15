@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, CheckCircle, Clock, TrendingUp, AlertCircle } from "lucide-react";
+import { Calendar, Users, Clock, TrendingUp, AlertCircle } from "lucide-react";
 import { formatDate, APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_LABELS } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,12 @@ import { startOfDay, endOfDay, startOfMonth, endOfMonth } from "date-fns";
 
 export default async function DashboardPage() {
   const session = await auth();
+
+  // Superadmin sin impersonación → panel global
+  if (session?.user.role === "SUPER_ADMIN" && !session.user.impersonating) {
+    redirect("/admin");
+  }
+
   const tenantId = session!.user.tenantId;
   const now = new Date();
 

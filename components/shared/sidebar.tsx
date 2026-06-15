@@ -4,19 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Calendar, Users, LayoutDashboard, Settings,
-  Zap, LogOut, ChevronLeft, Menu, Building2
+  Zap, LogOut, Building2, Plus, ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 
-const navItems = [
+const tenantNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/appointments", label: "Citas", icon: Calendar },
   { href: "/clients", label: "Clientes / CRM", icon: Users },
   { href: "/automations", label: "Automatizaciones", icon: Zap },
   { href: "/settings", label: "Configuración", icon: Settings },
+];
+
+const superAdminNavItems = [
+  { href: "/admin", label: "Panel global", icon: LayoutDashboard },
+  { href: "/admin/tenants/new", label: "Nuevo cliente", icon: Plus },
 ];
 
 interface SidebarProps {
@@ -32,36 +37,57 @@ interface SidebarProps {
     avatarUrl?: string | null;
   };
   role?: string;
+  impersonating?: boolean;
 }
 
-export function Sidebar({ tenant, user, role }: SidebarProps) {
+export function Sidebar({ tenant, user, role, impersonating }: SidebarProps) {
   const pathname = usePathname();
 
-  const items =
-    role === "SUPER_ADMIN"
-      ? [...navItems, { href: "/admin", label: "Super Admin", icon: Building2 }]
-      : navItems;
+  const isSuperAdminMode = role === "SUPER_ADMIN" && !impersonating;
+
+  const items = isSuperAdminMode
+    ? superAdminNavItems
+    : role === "SUPER_ADMIN"
+      ? [...tenantNavItems, { href: "/admin", label: "Super Admin", icon: Building2 }]
+      : tenantNavItems;
 
   return (
     <aside className="flex flex-col w-64 h-screen bg-slate-950 border-r border-slate-800 sticky top-0 shrink-0">
       {/* Logo / Tenant */}
       <div className="p-5 border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          {tenant.logoUrl ? (
-            <img src={tenant.logoUrl} alt={tenant.name} className="h-8 w-8 rounded-lg object-cover" />
-          ) : (
-            <div
-              className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-              style={{ backgroundColor: tenant.primaryColor || "#6366f1" }}
-            >
-              {getInitials(tenant.name)}
+        {isSuperAdminMode ? (
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-purple-600 text-white text-xs font-bold">
+              SA
             </div>
-          )}
-          <div className="min-w-0">
-            <p className="text-white font-semibold text-sm truncate">{tenant.name}</p>
-            <p className="text-slate-500 text-xs truncate font-mono">/booking/{tenant.slug}</p>
+            <div className="min-w-0">
+              <p className="text-white font-semibold text-sm">AgendaPro</p>
+              <p className="text-slate-500 text-xs">Panel de control</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            {impersonating && (
+              <Link href="/admin" className="text-slate-500 hover:text-purple-400 transition-colors mr-1" title="Volver al panel">
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+            )}
+            {tenant.logoUrl ? (
+              <img src={tenant.logoUrl} alt={tenant.name} className="h-8 w-8 rounded-lg object-cover" />
+            ) : (
+              <div
+                className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                style={{ backgroundColor: tenant.primaryColor || "#6366f1" }}
+              >
+                {getInitials(tenant.name)}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-white font-semibold text-sm truncate">{tenant.name}</p>
+              <p className="text-slate-500 text-xs truncate font-mono">/booking/{tenant.slug}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Nav */}
