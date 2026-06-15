@@ -79,15 +79,22 @@ async function main() {
     });
   }
 
-  // Disponibilidad lunes–viernes
-  for (const day of [1, 2, 3, 4, 5]) {
+  // Disponibilidad: 7 días, lun-vie activos 08:00-18:00, sáb-dom inactivos
+  const availDays = [
+    { dayOfWeek: 0, startTime: "09:00", endTime: "14:00", isActive: false },
+    { dayOfWeek: 1, startTime: "08:00", endTime: "18:00", isActive: true  },
+    { dayOfWeek: 2, startTime: "08:00", endTime: "18:00", isActive: true  },
+    { dayOfWeek: 3, startTime: "08:00", endTime: "18:00", isActive: true  },
+    { dayOfWeek: 4, startTime: "08:00", endTime: "18:00", isActive: true  },
+    { dayOfWeek: 5, startTime: "08:00", endTime: "18:00", isActive: true  },
+    { dayOfWeek: 6, startTime: "09:00", endTime: "14:00", isActive: false },
+  ];
+  for (const day of availDays) {
     const existing = await prisma.availabilityRule.findFirst({
-      where: { tenantId: demo.id, dayOfWeek: day, userId: null },
+      where: { tenantId: demo.id, dayOfWeek: day.dayOfWeek, userId: null },
     });
     if (!existing) {
-      await prisma.availabilityRule.create({
-        data: { tenantId: demo.id, dayOfWeek: day, startTime: "08:00", endTime: "18:00" },
-      });
+      await prisma.availabilityRule.create({ data: { tenantId: demo.id, ...day } });
     }
   }
 

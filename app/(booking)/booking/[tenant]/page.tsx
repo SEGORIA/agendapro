@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { BookingWidget } from "@/components/booking/booking-widget";
 import { parseBookingQuestions } from "@/lib/booking";
+import { MessageCircle, Mail, Globe } from "lucide-react";
 
 interface BookingPageProps {
   params: Promise<{ tenant: string }>;
@@ -46,7 +47,16 @@ export default async function BookingPage({ params }: BookingPageProps) {
     color: s.color,
     description: s.description,
     questions: parseBookingQuestions(s.bookingQuestions),
+    imageUrl: s.imageUrl,
   }));
+
+  const contactInfo = {
+    whatsappNumber: tenant.whatsappNumber,
+    contactEmail: tenant.contactEmail,
+    website: tenant.website,
+  };
+
+  const hasContact = !!(tenant.whatsappNumber || tenant.contactEmail || tenant.website);
 
   return (
     <div
@@ -55,6 +65,12 @@ export default async function BookingPage({ params }: BookingPageProps) {
         background: `linear-gradient(160deg, ${tenant.primaryColor}0d 0%, #f1f5f9 35%, #f8fafc 100%)`,
       }}
     >
+      {tenant.coverImageUrl && (
+        <div className="w-full max-w-4xl mx-auto mb-6 rounded-2xl overflow-hidden shadow-lg" style={{ maxHeight: "220px" }}>
+          <img src={tenant.coverImageUrl} alt={tenant.name} className="w-full h-full object-cover" />
+        </div>
+      )}
+
       <main className="flex-1 w-full">
         <BookingWidget
           tenant={{
@@ -67,10 +83,36 @@ export default async function BookingPage({ params }: BookingPageProps) {
           services={services}
           staff={tenant.users}
           availableWeekdays={availableWeekdays}
+          contactInfo={contactInfo}
         />
       </main>
 
-      <footer className="text-center mt-8">
+      <footer className="text-center mt-8 space-y-3">
+        {hasContact && (
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-500">
+            <span className="text-slate-400 font-medium">Contáctanos:</span>
+            {tenant.whatsappNumber && (
+              <a
+                href={`https://wa.me/${tenant.whatsappNumber.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 hover:text-green-600 transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" /> WhatsApp
+              </a>
+            )}
+            {tenant.contactEmail && (
+              <a href={`mailto:${tenant.contactEmail}`} className="hover:text-blue-600 transition-colors flex items-center gap-1.5">
+                <Mail className="w-4 h-4" /> {tenant.contactEmail}
+              </a>
+            )}
+            {tenant.website && (
+              <a href={tenant.website} target="_blank" rel="noreferrer" className="hover:text-purple-600 transition-colors flex items-center gap-1.5">
+                <Globe className="w-4 h-4" /> Sitio web
+              </a>
+            )}
+          </div>
+        )}
         <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
           Powered by <strong className="text-slate-500">AgendaPro</strong>
         </span>

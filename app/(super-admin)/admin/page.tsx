@@ -17,7 +17,7 @@ export default async function SuperAdminPage() {
 
   const tenants = await prisma.tenant.findMany({
     include: {
-      _count: { select: { users: true, clients: true, appointments: true } },
+      _count: { select: { users: true, clients: true, appointments: true, services: true, availabilityRules: true } },
     },
     orderBy: { createdAt: "desc" },
   });

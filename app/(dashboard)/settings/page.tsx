@@ -1,13 +1,14 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Settings, Palette, Link2, Copy } from "lucide-react";
+import { Settings, Palette, Link2, Clock } from "lucide-react";
 import { SECTOR_LABELS } from "@/lib/utils";
 import { parseBookingQuestions } from "@/lib/booking";
 import { getTenantBookingUrl } from "@/lib/tenant";
 import { ServicesManager } from "./services-manager";
 import { BrandingForm } from "./branding-form";
+import { CopyLinkButton } from "./copy-link-button";
+import { AvailabilityManager } from "./availability-manager";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -17,6 +18,11 @@ export default async function SettingsPage() {
     where: { id: tenantId },
     include: {
       services: { orderBy: { createdAt: "asc" } },
+      availabilityRules: {
+        where: { userId: null },
+        select: { dayOfWeek: true, startTime: true, endTime: true, isActive: true },
+        orderBy: { dayOfWeek: "asc" },
+      },
       _count: { select: { users: true } },
     },
   });
@@ -32,7 +38,19 @@ export default async function SettingsPage() {
     color: s.color,
     isActive: s.isActive,
     questions: parseBookingQuestions(s.bookingQuestions),
+    imageUrl: s.imageUrl,
   }));
+
+  const byDay = new Map(tenant.availabilityRules.map((r) => [r.dayOfWeek, r]));
+  const availabilityRules = Array.from({ length: 7 }, (_, day) => {
+    const rule = byDay.get(day);
+    return {
+      dayOfWeek: day,
+      startTime: rule?.startTime ?? "09:00",
+      endTime: rule?.endTime ?? "18:00",
+      isActive: rule?.isActive ?? false,
+    };
+  });
 
   const bookingUrl = getTenantBookingUrl(tenant.slug);
 
@@ -57,9 +75,7 @@ export default async function SettingsPage() {
             <div className="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-slate-300 text-sm font-mono truncate">
               {bookingUrl}
             </div>
-            <Button variant="outline" size="sm" className="border-slate-600 text-slate-300 shrink-0">
-              <Copy className="w-3.5 h-3.5" /> Copiar
-            </Button>
+            <CopyLinkButton url={bookingUrl} />
           </div>
         </CardContent>
       </Card>
@@ -72,7 +88,7 @@ export default async function SettingsPage() {
             Marca y apariencia
           </CardTitle>
           <CardDescription>
-            Sector: {SECTOR_LABELS[tenant.sector] || tenant.sector} · Personaliza el logo y los colores que verán tus clientes
+            Sector: {SECTOR_LABELS[tenant.sector] || tenant.sector} · Personaliza el logo, portada, colores e información de contacto
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -83,8 +99,28 @@ export default async function SettingsPage() {
               primaryColor: tenant.primaryColor,
               accentColor: tenant.accentColor,
               customDomain: tenant.customDomain,
+              coverImageUrl: tenant.coverImageUrl,
+              whatsappNumber: tenant.whatsappNumber,
+              contactEmail: tenant.contactEmail,
+              website: tenant.website,
             }}
           />
+        </CardContent>
+      </Card>
+
+      {/* Horario de atención */}
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white text-base flex items-center gap-2">
+            <Clock className="w-4 h-4 text-yellow-400" />
+            Horario de atención
+          </CardTitle>
+          <CardDescription>
+            Configura los días y horarios en que tus clientes pueden agendar citas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AvailabilityManager initialRules={availabilityRules} />
         </CardContent>
       </Card>
 
@@ -96,7 +132,7 @@ export default async function SettingsPage() {
             Servicios ofrecidos
           </CardTitle>
           <CardDescription>
-            Los servicios que tus clientes pueden reservar. Agrega preguntas personalizadas para calificar a cada cliente al agendar.
+            Los servicios que tus clientes pueden reservar. Agrega imágenes y preguntas personalizadas para calificar a cada cliente al agendar.
           </CardDescription>
         </CardHeader>
         <CardContent>

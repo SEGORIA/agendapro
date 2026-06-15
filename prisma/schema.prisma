@@ -21,6 +21,10 @@ model Tenant {
   plan           String   @default("starter")  // starter | pro | enterprise
   isActive       Boolean  @default(true)
   config         String   @default("{}")       // config extra por sector (JSON string)
+  coverImageUrl  String?
+  whatsappNumber String?
+  contactEmail   String?
+  website        String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -131,6 +135,7 @@ model Service {
   color       String   @default("#6366f1")
   isActive    Boolean  @default(true)
   bookingQuestions String @default("[]") // preguntas personalizadas al agendar (JSON array)
+  imageUrl    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

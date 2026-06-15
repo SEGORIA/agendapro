@@ -18,12 +18,19 @@ interface Service {
   color: string;
   description?: string | null;
   questions: BookingQuestion[];
+  imageUrl?: string | null;
 }
 
 interface StaffMember {
   id: string;
   name: string;
   avatarUrl?: string | null;
+}
+
+interface ContactInfo {
+  whatsappNumber: string | null;
+  contactEmail: string | null;
+  website: string | null;
 }
 
 interface BookingWidgetProps {
@@ -37,6 +44,7 @@ interface BookingWidgetProps {
   services: Service[];
   staff: StaffMember[];
   availableWeekdays: number[]; // 0=Dom ... 6=Sab según reglas de disponibilidad
+  contactInfo?: ContactInfo;
 }
 
 interface Slot {
@@ -49,7 +57,7 @@ type Step = "service" | "datetime" | "details" | "success";
 
 const WEEKDAY_HEADERS = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 
-export function BookingWidget({ tenant, services, staff, availableWeekdays }: BookingWidgetProps) {
+export function BookingWidget({ tenant, services, staff, availableWeekdays, contactInfo }: BookingWidgetProps) {
   const primary = tenant.primaryColor;
   const today = startOfToday();
 
@@ -193,6 +201,41 @@ export function BookingWidget({ tenant, services, staff, availableWeekdays }: Bo
               </div>
             )}
           </div>
+          {contactInfo && (contactInfo.whatsappNumber || contactInfo.contactEmail || contactInfo.website) && (
+            <div className="mt-6 pt-5 border-t border-slate-200">
+              <p className="text-slate-500 text-sm mb-3">¿Necesitas algo más?</p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                {contactInfo.whatsappNumber && (
+                  <a
+                    href={`https://wa.me/${contactInfo.whatsappNumber.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border border-green-200 text-green-700 hover:bg-green-50 transition-colors"
+                  >
+                    WhatsApp
+                  </a>
+                )}
+                {contactInfo.contactEmail && (
+                  <a
+                    href={`mailto:${contactInfo.contactEmail}`}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors"
+                  >
+                    {contactInfo.contactEmail}
+                  </a>
+                )}
+                {contactInfo.website && (
+                  <a
+                    href={contactInfo.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    Sitio web
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
           <button
             onClick={() => {
               setStep(services.length === 1 ? "datetime" : "service");
@@ -233,7 +276,11 @@ export function BookingWidget({ tenant, services, staff, availableWeekdays }: Bo
                 onClick={() => { setService(s); setStep("datetime"); }}
                 className="w-full text-left p-5 hover:bg-slate-50 transition-colors group flex items-start gap-4"
               >
-                <span className="w-3 h-3 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: s.color }} />
+                {s.imageUrl ? (
+                  <img src={s.imageUrl} alt={s.name} className="w-10 h-10 rounded-lg object-cover shrink-0 border border-slate-200 mt-0.5" />
+                ) : (
+                  <span className="w-3 h-3 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: s.color }} />
+                )}
                 <span className="flex-1 min-w-0">
                   <span className="block text-slate-900 font-semibold">{s.name}</span>
                   <span className="block text-slate-500 text-sm mt-0.5">

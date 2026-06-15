@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { bookingQuestionSchema } from "@/lib/booking";
 
+const MAX_SERVICE_IMAGE_LENGTH = 1_400_000;
+
 const updateSchema = z.object({
   name: z.string().min(2).optional(),
   description: z.string().optional().or(z.literal("")),
@@ -12,6 +14,12 @@ const updateSchema = z.object({
   color: z.string().optional(),
   isActive: z.boolean().optional(),
   bookingQuestions: z.array(bookingQuestionSchema).optional(),
+  imageUrl: z
+    .string()
+    .max(MAX_SERVICE_IMAGE_LENGTH, "La imagen es demasiado grande (máx. ~1MB)")
+    .regex(/^data:image\/(png|jpeg|jpg|webp);base64,/, "Formato de imagen no soportado")
+    .optional()
+    .nullable(),
 });
 
 // PATCH /api/services/[id] — actualizar servicio
@@ -38,6 +46,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         ...(data.color !== undefined && { color: data.color }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
         ...(data.bookingQuestions !== undefined && { bookingQuestions: JSON.stringify(data.bookingQuestions) }),
+        ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl ?? null }),
       },
     });
 

@@ -85,6 +85,19 @@ export async function POST(req: NextRequest) {
         })),
       });
 
+      // Crear disponibilidad por defecto: lun-vie activos 09:00-18:00, sáb-dom inactivos
+      await tx.availabilityRule.createMany({
+        data: [
+          { tenantId: tenant.id, userId: null, dayOfWeek: 0, startTime: "09:00", endTime: "14:00", isActive: false },
+          { tenantId: tenant.id, userId: null, dayOfWeek: 1, startTime: "09:00", endTime: "18:00", isActive: true  },
+          { tenantId: tenant.id, userId: null, dayOfWeek: 2, startTime: "09:00", endTime: "18:00", isActive: true  },
+          { tenantId: tenant.id, userId: null, dayOfWeek: 3, startTime: "09:00", endTime: "18:00", isActive: true  },
+          { tenantId: tenant.id, userId: null, dayOfWeek: 4, startTime: "09:00", endTime: "18:00", isActive: true  },
+          { tenantId: tenant.id, userId: null, dayOfWeek: 5, startTime: "09:00", endTime: "18:00", isActive: true  },
+          { tenantId: tenant.id, userId: null, dayOfWeek: 6, startTime: "09:00", endTime: "14:00", isActive: false },
+        ],
+      });
+
       return { tenant, adminUser };
     });
 

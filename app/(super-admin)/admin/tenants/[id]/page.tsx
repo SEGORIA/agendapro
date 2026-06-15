@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Users, Calendar, Briefcase, UserCog, ExternalLink } from "lucide-react";
+import { ArrowLeft, Users, Calendar, Briefcase, UserCog, ExternalLink, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { SessionProvider } from "next-auth/react";
 import { getTenantBookingUrl } from "@/lib/tenant";
@@ -28,7 +28,7 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
         select: { id: true, name: true, email: true, role: true, isActive: true },
         orderBy: { createdAt: "asc" },
       },
-      _count: { select: { clients: true, appointments: true, services: true } },
+      _count: { select: { clients: true, appointments: true, services: true, availabilityRules: true } },
     },
   });
 
@@ -93,6 +93,21 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
             </Card>
           ))}
         </div>
+
+        {tenant.isActive && (tenant._count.services === 0 || tenant._count.availabilityRules === 0) && (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-yellow-300 text-sm font-medium">Setup incompleto</p>
+              <p className="text-yellow-400/70 text-xs mt-0.5">
+                {[
+                  tenant._count.services === 0 && "Sin servicios: los clientes no podrán elegir qué agendar.",
+                  tenant._count.availabilityRules === 0 && "Sin horario: el calendario no tendrá días disponibles.",
+                ].filter(Boolean).join(" ")}
+              </p>
+            </div>
+          </div>
+        )}
 
         <TenantEditForm
           tenant={{

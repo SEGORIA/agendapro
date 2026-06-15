@@ -23,7 +23,7 @@ interface TenantListItem {
   plan: string;
   isActive: boolean;
   primaryColor: string;
-  _count: { users: number; appointments: number };
+  _count: { users: number; appointments: number; services: number; availabilityRules: number };
 }
 
 interface TenantListProps {
@@ -86,6 +86,9 @@ export function TenantList({ tenants: initialTenants }: TenantListProps) {
                 <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">
                   {tenant.plan}
                 </Badge>
+                {tenant.isActive && (tenant._count.services === 0 || tenant._count.availabilityRules === 0) && (
+                  <Badge variant="warning" className="text-xs">Setup incompleto</Badge>
+                )}
               </div>
               <div className="flex items-center gap-3 mt-0.5">
                 <span className="text-slate-400 text-xs font-mono">/booking/{tenant.slug}</span>

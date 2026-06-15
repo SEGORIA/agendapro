@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { bookingQuestionSchema } from "@/lib/booking";
 
+const MAX_SERVICE_IMAGE_LENGTH = 1_400_000;
+
 const createSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional().or(z.literal("")),
@@ -11,6 +13,12 @@ const createSchema = z.object({
   price: z.number().min(0).default(0),
   color: z.string().default("#6366f1"),
   bookingQuestions: z.array(bookingQuestionSchema).default([]),
+  imageUrl: z
+    .string()
+    .max(MAX_SERVICE_IMAGE_LENGTH, "La imagen es demasiado grande (máx. ~1MB)")
+    .regex(/^data:image\/(png|jpeg|jpg|webp);base64,/, "Formato de imagen no soportado")
+    .optional()
+    .nullable(),
 });
 
 // GET /api/services — listar servicios del tenant (incluye inactivos para gestión)
@@ -44,6 +52,7 @@ export async function POST(req: NextRequest) {
         price: data.price,
         color: data.color,
         bookingQuestions: JSON.stringify(data.bookingQuestions),
+        ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl ?? null }),
       },
     });
 
