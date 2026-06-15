@@ -1,20 +1,17 @@
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Users, Calendar, Briefcase, UserCog, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { getInitials } from "@/lib/utils";
+import { SessionProvider } from "next-auth/react";
 import { getTenantBookingUrl } from "@/lib/tenant";
 import { TenantEditForm } from "./tenant-edit-form";
-
-const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: "Super Admin",
-  ADMIN: "Administrador",
-  STAFF: "Staff",
-};
+import { TenantUsersManager } from "./tenant-users-manager";
+import { DangerZone } from "./danger-zone";
+import { ImpersonateButton } from "../../impersonate-button";
 
 export default async function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -40,6 +37,7 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
   const bookingUrl = getTenantBookingUrl(tenant.slug);
 
   return (
+    <SessionProvider session={session}>
     <div className="min-h-screen bg-slate-950 text-white p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
@@ -66,6 +64,7 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
             </div>
             <p className="text-slate-400 text-sm font-mono">/booking/{tenant.slug}</p>
           </div>
+          <ImpersonateButton tenantId={tenant.id} />
           <a href={bookingUrl} target="_blank" rel="noreferrer">
             <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800">
               <ExternalLink className="w-3.5 h-3.5" /> Ver booking
@@ -108,37 +107,11 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
           }}
         />
 
-        {/* Usuarios */}
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
-              <UserCog className="w-4 h-4 text-blue-400" />
-              Usuarios ({tenant.users.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="divide-y divide-slate-700">
-              {tenant.users.map((u) => (
-                <div key={u.id} className="flex items-center gap-4 py-3">
-                  <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                    {getInitials(u.name)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-medium">{u.name}</p>
-                    <p className="text-slate-400 text-xs">{u.email}</p>
-                  </div>
-                  <Badge variant="outline" className="text-slate-400 border-slate-600 text-xs">
-                    {ROLE_LABELS[u.role] || u.role}
-                  </Badge>
-                  <Badge variant={u.isActive ? "success" : "secondary"} className="text-xs">
-                    {u.isActive ? "Activo" : "Inactivo"}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <TenantUsersManager tenantId={tenant.id} users={tenant.users} />
+
+        <DangerZone tenant={{ id: tenant.id, slug: tenant.slug, name: tenant.name }} />
       </div>
     </div>
+    </SessionProvider>
   );
 }

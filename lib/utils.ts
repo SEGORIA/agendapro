@@ -59,6 +59,12 @@ export const SECTOR_LABELS: Record<string, string> = {
   fitness: "Fitness & Bienestar",
 };
 
+export const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: "Super Admin",
+  ADMIN: "Administrador",
+  STAFF: "Staff",
+};
+
 export const APPOINTMENT_STATUS_LABELS: Record<string, string> = {
   PENDING: "Pendiente",
   CONFIRMED: "Confirmada",

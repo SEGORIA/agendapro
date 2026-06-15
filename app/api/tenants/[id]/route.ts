@@ -81,3 +81,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
+
+// DELETE /api/tenants/[id] — eliminar tenant (solo super admin)
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await requireSuperAdmin();
+  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+
+  const { id } = await params;
+
+  const ownTenantId = session.user.originalTenantId ?? session.user.tenantId;
+  if (id === ownTenantId) {
+    return NextResponse.json({ error: "No puedes eliminar tu propio tenant" }, { status: 409 });
+  }
+
+  const tenant = await prisma.tenant.findUnique({ where: { id } });
+  if (!tenant) return NextResponse.json({ error: "Tenant no encontrado" }, { status: 404 });
+
+  await prisma.tenant.delete({ where: { id } });
+
+  return NextResponse.json({ data: { id } });
+}

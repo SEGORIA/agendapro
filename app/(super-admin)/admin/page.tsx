@@ -3,13 +3,10 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Building2, Users, Calendar, Plus, ExternalLink, ArrowLeft } from "lucide-react";
+import { Building2, Users, Calendar, Plus, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { SessionProvider } from "next-auth/react";
-import { SECTOR_LABELS } from "@/lib/utils";
-import { getTenantBookingUrl } from "@/lib/tenant";
-import { ImpersonateButton } from "./impersonate-button";
+import { TenantList } from "./tenant-list";
 
 export default async function SuperAdminPage() {
   const session = await auth();
@@ -86,57 +83,7 @@ export default async function SuperAdminPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="divide-y divide-slate-700">
-              {tenants.map((tenant) => (
-                <div key={tenant.id} className="flex items-center gap-4 py-4">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
-                    style={{ backgroundColor: tenant.primaryColor }}
-                  >
-                    {tenant.name[0].toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-white font-medium">{tenant.name}</p>
-                      <Badge variant={tenant.isActive ? "success" : "secondary"} className="text-xs">
-                        {tenant.isActive ? "Activo" : "Inactivo"}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">
-                        {tenant.plan}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-3 mt-0.5">
-                      <span className="text-slate-400 text-xs font-mono">/booking/{tenant.slug}</span>
-                      <span className="text-slate-500 text-xs">·</span>
-                      <span className="text-slate-400 text-xs">{SECTOR_LABELS[tenant.sector] || tenant.sector}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 shrink-0">
-                    <div className="text-right hidden md:block">
-                      <p className="text-slate-300 text-xs">{tenant._count.users} usuarios</p>
-                      <p className="text-slate-400 text-xs">{tenant._count.appointments} citas</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Link href={`/admin/tenants/${tenant.id}`}>
-                        <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 text-xs">
-                          Gestionar
-                        </Button>
-                      </Link>
-                      <ImpersonateButton tenantId={tenant.id} />
-                      <a
-                        href={getTenantBookingUrl(tenant.slug)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <Button size="sm" variant="ghost" className="text-slate-400 hover:text-white">
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </Button>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <TenantList tenants={tenants} />
           </CardContent>
         </Card>
       </div>
