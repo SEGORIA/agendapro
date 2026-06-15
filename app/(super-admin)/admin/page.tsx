@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Users, Calendar, Plus, ExternalLink, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { SessionProvider } from "next-auth/react";
 import { SECTOR_LABELS } from "@/lib/utils";
 import { getTenantBookingUrl } from "@/lib/tenant";
+import { ImpersonateButton } from "./impersonate-button";
 
 export default async function SuperAdminPage() {
   const session = await auth();
@@ -31,6 +33,7 @@ export default async function SuperAdminPage() {
   };
 
   return (
+    <SessionProvider session={session}>
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="border-b border-slate-800 px-8 py-5 flex items-center justify-between">
         <div>
@@ -119,6 +122,7 @@ export default async function SuperAdminPage() {
                           Gestionar
                         </Button>
                       </Link>
+                      <ImpersonateButton tenantId={tenant.id} />
                       <a
                         href={getTenantBookingUrl(tenant.slug)}
                         target="_blank"
@@ -137,5 +141,6 @@ export default async function SuperAdminPage() {
         </Card>
       </div>
     </div>
+    </SessionProvider>
   );
 }

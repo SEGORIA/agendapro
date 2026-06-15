@@ -43,6 +43,9 @@ declare module "next-auth" {
       role: string;
       tenantId: string;
       tenantSlug: string;
+      impersonating?: boolean;
+      originalTenantId?: string;
+      originalTenantSlug?: string;
     };
   }
 }

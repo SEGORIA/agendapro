@@ -57,13 +57,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
         token.tenantId = (user as any).tenantId;
         token.tenantSlug = (user as any).tenantSlug;
       }
+
+      // Impersonación (solo SUPER_ADMIN)
+      if (trigger === "update" && token.role === "SUPER_ADMIN") {
+        if (session?.impersonateTenantId && !token.impersonating) {
+          const target = await prisma.tenant.findUnique({
+            where: { id: session.impersonateTenantId },
+            select: { id: true, slug: true, isActive: true },
+          });
+
+          if (target?.isActive) {
+            token.originalTenantId = token.tenantId as string;
+            token.originalTenantSlug = token.tenantSlug as string;
+            token.tenantId = target.id;
+            token.tenantSlug = target.slug;
+            token.impersonating = true;
+          }
+        } else if (session?.exitImpersonation && token.impersonating) {
+          token.tenantId = token.originalTenantId as string;
+          token.tenantSlug = token.originalTenantSlug as string;
+          token.impersonating = false;
+          delete token.originalTenantId;
+          delete token.originalTenantSlug;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -72,6 +97,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = token.role as string;
         session.user.tenantId = token.tenantId as string;
         session.user.tenantSlug = token.tenantSlug as string;
+        session.user.impersonating = Boolean(token.impersonating);
+        if (token.originalTenantSlug) {
+          session.user.originalTenantSlug = token.originalTenantSlug as string;
+        }
       }
       return session;
     },
