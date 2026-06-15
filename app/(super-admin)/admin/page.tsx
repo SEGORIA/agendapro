@@ -103,7 +103,7 @@ export default async function SuperAdminPage() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
-                      <span className="text-slate-400 text-xs">{tenant.slug}.agendapro.com</span>
+                      <span className="text-slate-400 text-xs font-mono">/booking/{tenant.slug}</span>
                       <span className="text-slate-500 text-xs">·</span>
                       <span className="text-slate-400 text-xs">{SECTOR_LABELS[tenant.sector] || tenant.sector}</span>
                     </div>

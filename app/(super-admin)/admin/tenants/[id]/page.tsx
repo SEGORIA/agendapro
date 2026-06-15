@@ -64,7 +64,7 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
                 {tenant.plan}
               </Badge>
             </div>
-            <p className="text-slate-400 text-sm">{tenant.slug}.agendapro.com</p>
+            <p className="text-slate-400 text-sm font-mono">/booking/{tenant.slug}</p>
           </div>
           <a href={bookingUrl} target="_blank" rel="noreferrer">
             <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800">

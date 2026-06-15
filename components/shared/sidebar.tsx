@@ -59,7 +59,7 @@ export function Sidebar({ tenant, user, role }: SidebarProps) {
           )}
           <div className="min-w-0">
             <p className="text-white font-semibold text-sm truncate">{tenant.name}</p>
-            <p className="text-slate-500 text-xs truncate">{tenant.slug}.agendapro.com</p>
+            <p className="text-slate-500 text-xs truncate font-mono">/booking/{tenant.slug}</p>
           </div>
         </div>
       </div>

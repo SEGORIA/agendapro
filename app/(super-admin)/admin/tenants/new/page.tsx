@@ -83,8 +83,9 @@ export default function NewTenantPage() {
                 />
               </div>
               <div>
-                <label className="text-slate-300 text-sm font-medium block mb-1.5">Slug (subdominio) *</label>
+                <label className="text-slate-300 text-sm font-medium block mb-1.5">Slug (identificador en la URL) *</label>
                 <div className="flex items-center gap-2">
+                  <span className="text-slate-400 text-sm whitespace-nowrap font-mono">/booking/</span>
                   <Input
                     value={form.slug}
                     onChange={(e) => setForm({ ...form, slug: e.target.value })}
@@ -92,7 +93,6 @@ export default function NewTenantPage() {
                     required
                     className="bg-slate-900 border-slate-600 text-white font-mono"
                   />
-                  <span className="text-slate-400 text-sm whitespace-nowrap">.agendapro.com</span>
                 </div>
               </div>
               <div>
