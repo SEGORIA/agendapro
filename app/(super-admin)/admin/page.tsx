@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users, Calendar, Plus, ExternalLink } from "lucide-react";
+import { Building2, Users, Calendar, Plus, ExternalLink, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { SECTOR_LABELS } from "@/lib/utils";
 
@@ -36,11 +36,18 @@ export default async function SuperAdminPage() {
           <h1 className="text-xl font-bold">Super Admin — AgendaPro</h1>
           <p className="text-slate-400 text-sm">Panel de control global</p>
         </div>
-        <Link href="/admin/tenants/new">
-          <Button className="bg-purple-600 hover:bg-purple-500">
-            <Plus className="w-4 h-4" /> Nuevo tenant
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard">
+            <Button variant="outline" className="border-slate-700 text-slate-300">
+              <ArrowLeft className="w-4 h-4" /> Mi panel
+            </Button>
+          </Link>
+          <Link href="/admin/tenants/new">
+            <Button className="bg-purple-600 hover:bg-purple-500">
+              <Plus className="w-4 h-4" /> Nuevo tenant
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="p-8 space-y-8">

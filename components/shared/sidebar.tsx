@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Calendar, Users, LayoutDashboard, Settings,
-  Zap, LogOut, ChevronLeft, Menu
+  Zap, LogOut, ChevronLeft, Menu, Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -31,10 +31,16 @@ interface SidebarProps {
     email?: string | null;
     avatarUrl?: string | null;
   };
+  role?: string;
 }
 
-export function Sidebar({ tenant, user }: SidebarProps) {
+export function Sidebar({ tenant, user, role }: SidebarProps) {
   const pathname = usePathname();
+
+  const items =
+    role === "SUPER_ADMIN"
+      ? [...navItems, { href: "/admin", label: "Super Admin", icon: Building2 }]
+      : navItems;
 
   return (
     <aside className="flex flex-col w-64 h-screen bg-slate-950 border-r border-slate-800 sticky top-0 shrink-0">
@@ -60,7 +66,7 @@ export function Sidebar({ tenant, user }: SidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {items.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link

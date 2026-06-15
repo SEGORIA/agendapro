@@ -31,7 +31,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-slate-900 overflow-hidden">
-      <Sidebar tenant={tenant} user={user || {}} />
+      <Sidebar tenant={tenant} user={user || {}} role={session.user.role} />
       <main className="flex-1 overflow-y-auto">
         <div className="flex items-center justify-end px-8 py-3 border-b border-slate-800 sticky top-0 bg-slate-900/80 backdrop-blur-sm z-40">
           <NotificationBell />
