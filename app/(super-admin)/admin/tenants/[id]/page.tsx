@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Users, Calendar, Briefcase, UserCog, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { getInitials } from "@/lib/utils";
+import { getTenantBookingUrl } from "@/lib/tenant";
 import { TenantEditForm } from "./tenant-edit-form";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -36,7 +37,7 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
 
   if (!tenant) notFound();
 
-  const bookingUrl = `http://${tenant.slug}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || "localhost:3000"}/booking`;
+  const bookingUrl = getTenantBookingUrl(tenant.slug);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-8">

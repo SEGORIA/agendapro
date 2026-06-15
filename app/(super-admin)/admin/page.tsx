@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Building2, Users, Calendar, Plus, ExternalLink, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { SECTOR_LABELS } from "@/lib/utils";
+import { getTenantBookingUrl } from "@/lib/tenant";
 
 export default async function SuperAdminPage() {
   const session = await auth();
@@ -119,7 +120,7 @@ export default async function SuperAdminPage() {
                         </Button>
                       </Link>
                       <a
-                        href={`http://${tenant.slug}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || "localhost:3000"}/booking`}
+                        href={getTenantBookingUrl(tenant.slug)}
                         target="_blank"
                         rel="noreferrer"
                       >

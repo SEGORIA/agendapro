@@ -5,15 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Settings, Palette, Link2, Copy } from "lucide-react";
 import { SECTOR_LABELS } from "@/lib/utils";
 import { parseBookingQuestions } from "@/lib/booking";
+import { getTenantBookingUrl } from "@/lib/tenant";
 import { ServicesManager } from "./services-manager";
 import { BrandingForm } from "./branding-form";
-
-// lib/utils no tiene getTenantBookingUrl exportado, pero lo tenemos en lib/tenant.ts
-// Lo usamos directamente aquí
-function getBookingUrl(slug: string) {
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "localhost:3000";
-  return `http://${slug}.${rootDomain}/booking`;
-}
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -40,7 +34,7 @@ export default async function SettingsPage() {
     questions: parseBookingQuestions(s.bookingQuestions),
   }));
 
-  const bookingUrl = getBookingUrl(tenant.slug);
+  const bookingUrl = getTenantBookingUrl(tenant.slug);
 
   return (
     <div className="space-y-6 max-w-3xl">

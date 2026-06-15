@@ -51,7 +51,6 @@ export async function getCurrentTenant() {
  * Genera la URL de booking público de un tenant.
  */
 export function getTenantBookingUrl(slug: string): string {
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "localhost:3000";
-  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-  return `${protocol}://${slug}.${rootDomain}/booking`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return `${appUrl}/booking/${slug}`;
 }
