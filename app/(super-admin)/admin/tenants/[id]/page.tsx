@@ -4,13 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Users, Calendar, Briefcase, UserCog, ExternalLink, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Users, Calendar, Briefcase, UserCog, ExternalLink, AlertTriangle, Link2, Globe, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { getTenantBookingUrl } from "@/lib/tenant";
 import { TenantEditForm } from "./tenant-edit-form";
 import { TenantUsersManager } from "./tenant-users-manager";
 import { DangerZone } from "./danger-zone";
 import { ImpersonateButton } from "../../impersonate-button";
+import { CopyButton } from "./copy-button";
 
 export default async function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -62,7 +63,6 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
             </div>
             <p className="text-slate-400 text-sm font-mono">/booking/{tenant.slug}</p>
           </div>
-          <ImpersonateButton tenantId={tenant.id} />
           <a href={bookingUrl} target="_blank" rel="noreferrer">
             <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800">
               <ExternalLink className="w-3.5 h-3.5" /> Ver booking
@@ -91,6 +91,39 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
             </Card>
           ))}
         </div>
+
+        {/* Accesos del cliente */}
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardContent className="p-5 space-y-3">
+            <h3 className="text-white text-sm font-semibold flex items-center gap-2">
+              <Link2 className="w-4 h-4 text-slate-400" />
+              Accesos del cliente
+            </h3>
+
+            <div className="flex items-center gap-3 bg-slate-900/60 rounded-lg px-3 py-2.5">
+              <Globe className="w-4 h-4 text-slate-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-slate-500 text-xs mb-0.5">Página de reservas pública</p>
+                <p className="text-slate-200 text-sm font-mono truncate">{bookingUrl}</p>
+              </div>
+              <CopyButton text={bookingUrl} />
+              <a href={bookingUrl} target="_blank" rel="noreferrer">
+                <Button size="sm" variant="ghost" className="text-slate-400 hover:text-white px-2">
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Button>
+              </a>
+            </div>
+
+            <div className="flex items-center gap-3 bg-slate-900/60 rounded-lg px-3 py-2.5">
+              <LayoutDashboard className="w-4 h-4 text-slate-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-slate-500 text-xs mb-0.5">Panel de administración del cliente</p>
+                <p className="text-slate-400 text-sm">Requiere entrar como el cliente</p>
+              </div>
+              <ImpersonateButton tenantId={tenant.id} label="Ir al dashboard" />
+            </div>
+          </CardContent>
+        </Card>
 
         {tenant.isActive && (tenant._count.services === 0 || tenant._count.availabilityRules === 0) && (
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3 flex items-start gap-3">
