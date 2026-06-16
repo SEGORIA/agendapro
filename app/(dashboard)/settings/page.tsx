@@ -1,14 +1,17 @@
+import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Settings, Palette, Link2, Clock } from "lucide-react";
+import { Settings, Palette, Link2, Clock, CalendarClock } from "lucide-react";
 import { SECTOR_LABELS } from "@/lib/utils";
 import { parseBookingQuestions } from "@/lib/booking";
 import { getTenantBookingUrl } from "@/lib/tenant";
+import { getGoogleConnection, isGoogleConfigured } from "@/lib/google-calendar";
 import { ServicesManager } from "./services-manager";
 import { BrandingForm } from "./branding-form";
 import { CopyLinkButton } from "./copy-link-button";
 import { AvailabilityManager } from "./availability-manager";
+import { GoogleCalendarCard } from "./google-calendar-card";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -53,6 +56,9 @@ export default async function SettingsPage() {
   });
 
   const bookingUrl = getTenantBookingUrl(tenant.slug);
+
+  const googleConn = await getGoogleConnection(tenantId);
+  const googleConfigured = isGoogleConfigured();
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -121,6 +127,28 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <AvailabilityManager initialRules={availabilityRules} />
+        </CardContent>
+      </Card>
+
+      {/* Google Calendar */}
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white text-base flex items-center gap-2">
+            <CalendarClock className="w-4 h-4 text-blue-400" />
+            Google Calendar
+          </CardTitle>
+          <CardDescription>
+            Conecta tu calendario para bloquear automáticamente los horarios que ya tienes ocupados y crear un evento por cada cita
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Suspense fallback={null}>
+            <GoogleCalendarCard
+              connected={!!googleConn}
+              email={googleConn?.email}
+              configured={googleConfigured}
+            />
+          </Suspense>
         </CardContent>
       </Card>
 

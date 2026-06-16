@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { format, parseISO, addMinutes, setHours, setMinutes, startOfDay, endOfDay } from "date-fns";
+import { getFreeBusy } from "@/lib/google-calendar";
 
 // GET /api/slots?tenantId=xxx&serviceId=xxx&date=2024-01-15&staffId=xxx
 // Público — no requiere auth
@@ -51,6 +52,21 @@ export async function GET(req: NextRequest) {
     select: { startsAt: true, endsAt: true },
   });
 
+  // Horarios ocupados en Google Calendar del tenant (si está conectado).
+  // getFreeBusy devuelve [] si no hay conexión o si la llamada falla.
+  let googleBusy: { start: Date; end: Date }[] = [];
+  try {
+    googleBusy = await getFreeBusy(tenantId, startOfDay(date), endOfDay(date));
+  } catch {
+    googleBusy = [];
+  }
+
+  // Lista unificada de intervalos ocupados (citas internas + Google Calendar)
+  const busyIntervals = [
+    ...existingAppointments.map((a) => ({ start: a.startsAt, end: a.endsAt })),
+    ...googleBusy,
+  ];
+
   const slots: { time: string; datetime: string; available: boolean }[] = [];
 
   for (const rule of availabilityRules) {
@@ -65,9 +81,9 @@ export async function GET(req: NextRequest) {
 
       if (slotEnd > endTime) break;
 
-      // Verificar que no haya conflicto
-      const hasConflict = existingAppointments.some(
-        (apt) => currentTime < apt.endsAt && slotEnd > apt.startsAt
+      // Verificar que no haya conflicto (citas internas o eventos de Google)
+      const hasConflict = busyIntervals.some(
+        (b) => currentTime < b.end && slotEnd > b.start
       );
 
       // Solo mostrar slots futuros

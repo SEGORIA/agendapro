@@ -4,12 +4,23 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { addMinutes } from "date-fns";
 import { createNotification, type NotificationType } from "@/lib/notifications";
+import { updateCalendarEvent, deleteCalendarEvent } from "@/lib/google-calendar";
 
 const STATUS_NOTIFICATIONS: Partial<Record<string, { type: NotificationType; title: string }>> = {
   CONFIRMED: { type: "appointment.confirmed", title: "Cita confirmada" },
   CANCELLED: { type: "appointment.cancelled", title: "Cita cancelada" },
   COMPLETED: { type: "appointment.completed", title: "Cita completada" },
 };
+
+// Extrae el id del evento de Google guardado en metadata (JSON)
+function parseGoogleEventId(metadata: string | null | undefined): string | null {
+  if (!metadata) return null;
+  try {
+    return JSON.parse(metadata)?.googleEventId ?? null;
+  } catch {
+    return null;
+  }
+}
 
 const updateSchema = z.object({
   status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW", "RESCHEDULED"]).optional(),
@@ -95,6 +106,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     }
 
+    // Sincronizar con Google Calendar (best-effort)
+    const googleEventId = parseGoogleEventId(appointment.metadata);
+    if (googleEventId) {
+      try {
+        if (data.status === "CANCELLED") {
+          await deleteCalendarEvent(session.user.tenantId, googleEventId);
+        } else if (reschedule.startsAt && reschedule.endsAt) {
+          await updateCalendarEvent(session.user.tenantId, googleEventId, reschedule.startsAt, reschedule.endsAt);
+        }
+      } catch {
+        // un fallo de Google no debe romper la actualización de la cita
+      }
+    }
+
     return NextResponse.json({ data: appointment });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -116,6 +141,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     data: { status: "CANCELLED" },
     include: { client: true, service: true },
   });
+
+  // Borrar el evento de Google Calendar si existe (best-effort)
+  const googleEventId = parseGoogleEventId(appointment.metadata);
+  if (googleEventId) {
+    try {
+      await deleteCalendarEvent(session.user.tenantId, googleEventId);
+    } catch {
+      // ignorar fallo de Google
+    }
+  }
 
   await createNotification(session.user.tenantId, {
     type: "appointment.cancelled",

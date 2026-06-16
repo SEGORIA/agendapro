@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { addMinutes } from "date-fns";
+import { createCalendarEvent } from "@/lib/google-calendar";
 
 const createSchema = z.object({
   clientId: z.string().optional(),
@@ -96,6 +97,24 @@ export async function POST(req: NextRequest) {
       },
       include: { client: true, service: true },
     });
+
+    // Crear evento en Google Calendar del tenant (si está conectado)
+    try {
+      const eventId = await createCalendarEvent(session.user.tenantId, {
+        summary: `${service.name} — ${appointment.client.name}`,
+        description: data.notes || undefined,
+        start: startsAt,
+        end: endsAt,
+      });
+      if (eventId) {
+        await prisma.appointment.update({
+          where: { id: appointment.id },
+          data: { metadata: JSON.stringify({ googleEventId: eventId }) },
+        });
+      }
+    } catch {
+      // un fallo de Google no debe romper la creación de la cita
+    }
 
     return NextResponse.json({ data: appointment }, { status: 201 });
   } catch (error) {
