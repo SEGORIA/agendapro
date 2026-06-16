@@ -4,6 +4,7 @@ import { z } from "zod";
 import { addMinutes } from "date-fns";
 import { createNotification } from "@/lib/notifications";
 import { createCalendarEvent } from "@/lib/google-calendar";
+import { runAutomations } from "@/lib/automation-engine";
 
 const schema = z.object({
   tenantId: z.string(),
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
     // Verificar que el tenant existe
     const tenant = await prisma.tenant.findUnique({
       where: { id: data.tenantId, isActive: true },
+      select: { id: true, name: true, primaryColor: true },
     });
     if (!tenant) {
       return NextResponse.json({ error: "Tenant no encontrado" }, { status: 404 });
@@ -120,8 +122,13 @@ export async function POST(req: NextRequest) {
       // la cita ya se creó; un fallo de Google no debe romper el booking
     }
 
-    // TODO: Disparar automatizaciones (appointment.created)
-    // TODO: Enviar email de confirmación
+    // Disparar automatizaciones (best-effort, no rompe el booking si falla)
+    void runAutomations("appointment.created", {
+      client: { name: client.name, email: client.email ?? null, phone: client.phone ?? null },
+      service: { name: service.name, durationMin: service.durationMin },
+      appointment: { id: appointment.id, startsAt, endsAt, notes: data.notes },
+      tenant: { id: tenant.id, name: tenant.name, primaryColor: tenant.primaryColor },
+    });
 
     await createNotification(data.tenantId, {
       type: "appointment.created",

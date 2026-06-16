@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { addMinutes } from "date-fns";
 import { createCalendarEvent } from "@/lib/google-calendar";
+import { runAutomations } from "@/lib/automation-engine";
 
 const createSchema = z.object({
   clientId: z.string().optional(),
@@ -114,6 +115,24 @@ export async function POST(req: NextRequest) {
       }
     } catch {
       // un fallo de Google no debe romper la creación de la cita
+    }
+
+    // Disparar automatizaciones (best-effort)
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: session.user.tenantId },
+      select: { id: true, name: true, primaryColor: true },
+    });
+    if (tenant) {
+      void runAutomations("appointment.created", {
+        client: {
+          name: appointment.client.name,
+          email: appointment.client.email ?? null,
+          phone: appointment.client.phone ?? null,
+        },
+        service: { name: service.name, durationMin: service.durationMin },
+        appointment: { id: appointment.id, startsAt, endsAt, notes: data.notes },
+        tenant: { id: tenant.id, name: tenant.name, primaryColor: tenant.primaryColor },
+      });
     }
 
     return NextResponse.json({ data: appointment }, { status: 201 });

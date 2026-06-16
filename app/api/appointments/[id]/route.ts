@@ -5,6 +5,7 @@ import { z } from "zod";
 import { addMinutes } from "date-fns";
 import { createNotification, type NotificationType } from "@/lib/notifications";
 import { updateCalendarEvent, deleteCalendarEvent } from "@/lib/google-calendar";
+import { runAutomations } from "@/lib/automation-engine";
 
 const STATUS_NOTIFICATIONS: Partial<Record<string, { type: NotificationType; title: string }>> = {
   CONFIRMED: { type: "appointment.confirmed", title: "Cita confirmada" },
@@ -120,6 +121,45 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     }
 
+    // Disparar automatizaciones (best-effort)
+    const TRIGGER_BY_STATUS: Record<string, string> = {
+      CONFIRMED: "appointment.confirmed",
+      CANCELLED: "appointment.cancelled",
+      COMPLETED: "appointment.completed",
+    };
+    const triggerEvent = startsAt
+      ? "appointment.rescheduled"
+      : data.status
+      ? TRIGGER_BY_STATUS[data.status]
+      : undefined;
+
+    if (triggerEvent) {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: session.user.tenantId },
+        select: { id: true, name: true, primaryColor: true },
+      });
+      if (tenant && appointment.service) {
+        void runAutomations(triggerEvent, {
+          client: {
+            name: appointment.client.name,
+            email: appointment.client.email ?? null,
+            phone: appointment.client.phone ?? null,
+          },
+          service: {
+            name: appointment.service.name,
+            durationMin: appointment.service.durationMin,
+          },
+          appointment: {
+            id: appointment.id,
+            startsAt: reschedule.startsAt ?? appointment.startsAt,
+            endsAt: reschedule.endsAt ?? appointment.endsAt,
+            notes: appointment.notes,
+          },
+          tenant: { id: tenant.id, name: tenant.name, primaryColor: tenant.primaryColor },
+        });
+      }
+    }
+
     return NextResponse.json({ data: appointment });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -158,6 +198,32 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     message: `${appointment.client.name} · ${appointment.service?.name || "Cita"}`,
     link: `/appointments/${appointment.id}`,
   });
+
+  if (appointment.service) {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: session.user.tenantId },
+      select: { id: true, name: true, primaryColor: true },
+    });
+    if (tenant) {
+      void runAutomations("appointment.cancelled", {
+        client: {
+          name: appointment.client.name,
+          email: appointment.client.email ?? null,
+          phone: appointment.client.phone ?? null,
+        },
+        service: {
+          name: appointment.service.name,
+          durationMin: appointment.service.durationMin,
+        },
+        appointment: {
+          id: appointment.id,
+          startsAt: appointment.startsAt,
+          endsAt: appointment.endsAt,
+        },
+        tenant: { id: tenant.id, name: tenant.name, primaryColor: tenant.primaryColor },
+      });
+    }
+  }
 
   return NextResponse.json({ message: "Cita cancelada" });
 }
