@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SECTOR_LABELS } from "@/lib/utils";
+import { SECTOR_LABELS, getErrorMessage } from "@/lib/utils";
 import { Settings2, Loader2 } from "lucide-react";
 import axios from "axios";
 
@@ -53,8 +53,8 @@ export function TenantEditForm({ tenant }: TenantEditFormProps) {
       });
       setSaved(true);
       router.refresh();
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Error al guardar los cambios");
+    } catch (err) {
+      setError(getErrorMessage(err, "Error al guardar los cambios"));
     } finally {
       setLoading(false);
     }

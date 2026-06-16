@@ -1,5 +1,7 @@
 "use client";
 
+import { getErrorMessage } from "@/lib/utils";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -42,8 +44,8 @@ export function DangerZone({ tenant }: DangerZoneProps) {
       await axios.delete(`/api/tenants/${tenant.id}`);
       router.push("/admin");
       router.refresh();
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Error al eliminar el tenant");
+    } catch (err) {
+      setError(getErrorMessage(err, "Error al eliminar el tenant"));
       setLoading(false);
     }
   }

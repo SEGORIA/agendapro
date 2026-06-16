@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1");
   const pageSize = 20;
 
-  const where: any = { tenantId: session.user.tenantId };
+  const where: Record<string, unknown> = { tenantId: session.user.tenantId };
   if (status) where.status = status;
 
   const [appointments, total] = await Promise.all([

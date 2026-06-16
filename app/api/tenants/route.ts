@@ -18,7 +18,7 @@ const createTenantSchema = z.object({
 });
 
 // GET /api/tenants — listar todos (solo super admin)
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await auth();
   if (!session || session.user.role !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });

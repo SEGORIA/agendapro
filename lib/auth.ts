@@ -59,10 +59,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {
+        const u = user as { role?: string; tenantId?: string; tenantSlug?: string };
         token.id = user.id;
-        token.role = (user as any).role;
-        token.tenantId = (user as any).tenantId;
-        token.tenantSlug = (user as any).tenantSlug;
+        token.role = u.role;
+        token.tenantId = u.tenantId;
+        token.tenantSlug = u.tenantSlug;
       }
 
       // Impersonación (solo SUPER_ADMIN)

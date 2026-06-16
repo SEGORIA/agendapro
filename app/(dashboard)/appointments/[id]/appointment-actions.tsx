@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { APPOINTMENT_STATUS_LABELS } from "@/lib/utils";
+import { APPOINTMENT_STATUS_LABELS, getErrorMessage } from "@/lib/utils";
 import { Loader2, Check, Video, XCircle } from "lucide-react";
 import axios from "axios";
 
@@ -32,7 +32,7 @@ export function AppointmentActions({
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function patch(data: Record<string, any>, key: string) {
+  async function patch(data: Record<string, unknown>, key: string) {
     setSaving(key);
     setSaved(null);
     setError(null);
@@ -41,8 +41,8 @@ export function AppointmentActions({
       setSaved(key);
       router.refresh();
       setTimeout(() => setSaved(null), 1500);
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Error al guardar");
+    } catch (err) {
+      setError(getErrorMessage(err, "Error al guardar"));
     } finally {
       setSaving(null);
     }

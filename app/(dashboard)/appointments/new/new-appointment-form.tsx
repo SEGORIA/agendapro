@@ -10,6 +10,7 @@ import { Loader2, ArrowLeft, Search, X, Clock } from "lucide-react";
 import { format, addDays, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
 import Link from "next/link";
+import { getErrorMessage } from "@/lib/utils";
 import axios from "axios";
 
 interface Service {
@@ -119,7 +120,7 @@ export function NewAppointmentForm({
 
     setLoading(true);
     try {
-      const payload: Record<string, any> = {
+      const payload: Record<string, unknown> = {
         serviceId,
         startsAt: selectedSlot.datetime,
         notes: notes || undefined,
@@ -135,8 +136,8 @@ export function NewAppointmentForm({
 
       const res = await axios.post("/api/appointments", payload);
       router.push(`/appointments/${res.data.data.id}`);
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Error al crear la cita");
+    } catch (err) {
+      setError(getErrorMessage(err, "Error al crear la cita"));
     } finally {
       setLoading(false);
     }

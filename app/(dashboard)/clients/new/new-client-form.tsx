@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { getErrorMessage } from "@/lib/utils";
 import axios from "axios";
 
 interface Stage {
@@ -37,8 +38,8 @@ export function NewClientForm({ stages }: { stages: Stage[] }) {
     try {
       const res = await axios.post("/api/clients", form);
       router.push(`/clients/${res.data.data.id}`);
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Error al crear el cliente");
+    } catch (err) {
+      setError(getErrorMessage(err, "Error al crear el cliente"));
     } finally {
       setLoading(false);
     }

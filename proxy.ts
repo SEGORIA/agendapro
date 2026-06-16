@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 
 export default auth((req) => {
@@ -14,15 +13,6 @@ export default auth((req) => {
     host.endsWith(`.${rootDomain}`);
 
   const tenantSlug = isSubdomain ? host.replace(`.${rootDomain}`, "") : null;
-
-  // ─── Rutas públicas que no requieren auth ───
-  const isPublicPath =
-    pathname.startsWith("/booking") ||
-    pathname.startsWith("/api/slots") ||
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    pathname === "/";
 
   // ─── Super-admin solo desde el dominio raíz ───
   if (pathname.startsWith("/admin")) {

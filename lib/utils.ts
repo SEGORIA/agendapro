@@ -91,3 +91,15 @@ export const PIPELINE_DEFAULT_STAGES = [
   { name: "Cliente", color: "#22c55e", order: 4 },
   { name: "Cerrado", color: "#6b7280", order: 5 },
 ];
+
+/**
+ * Extrae un mensaje de error legible de una excepción (axios u otra),
+ * sin necesidad de importar axios ni usar `any`.
+ */
+export function getErrorMessage(err: unknown, fallback = "Ocurrió un error"): string {
+  if (err && typeof err === "object") {
+    const e = err as { response?: { data?: { error?: string } }; message?: string };
+    return e.response?.data?.error || e.message || fallback;
+  }
+  return fallback;
+}

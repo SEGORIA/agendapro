@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/notifications — últimas notificaciones del tenant + conteo de no leídas
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 }
 
 // PATCH /api/notifications — marcar todas como leídas
-export async function PATCH(req: NextRequest) {
+export async function PATCH() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 

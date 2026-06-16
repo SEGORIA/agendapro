@@ -9,6 +9,7 @@ import {
 import { es } from "date-fns/locale";
 import axios from "axios";
 import type { BookingQuestion } from "@/lib/booking";
+import { getErrorMessage } from "@/lib/utils";
 
 interface Service {
   id: string;
@@ -144,8 +145,8 @@ export function BookingWidget({ tenant, services, staff, availableWeekdays, cont
         formData,
       });
       setStep("success");
-    } catch (err: any) {
-      setError(err.response?.data?.error || "No pudimos agendar tu cita. Intenta de nuevo.");
+    } catch (err) {
+      setError(getErrorMessage(err, "No pudimos agendar tu cita. Intenta de nuevo."));
     } finally {
       setSubmitting(false);
     }

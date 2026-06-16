@@ -99,7 +99,7 @@ export default async function AutomationsPage() {
           ) : (
             <div className="space-y-3">
               {automations.map((auto) => {
-                const actions: any[] = JSON.parse(auto.actions || "[]");
+                const actions: { type: string }[] = JSON.parse(auto.actions || "[]");
                 return (
                   <Link
                     key={auto.id}
@@ -117,7 +117,7 @@ export default async function AutomationsPage() {
                         </span>
                         <ArrowRight className="w-3 h-3 text-slate-600" />
                         <div className="flex gap-1">
-                          {actions?.map((action: any, i: number) => {
+                          {actions?.map((action: { type: string }, i: number) => {
                             const Icon = ACTION_ICONS[action.type] || Zap;
                             return (
                               <span key={i} className="text-slate-400 text-xs bg-slate-700 px-2 py-0.5 rounded flex items-center gap-1">

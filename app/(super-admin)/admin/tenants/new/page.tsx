@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Loader2, Building2 } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
-import { slugify, SECTOR_LABELS } from "@/lib/utils";
+import { slugify, SECTOR_LABELS, getErrorMessage } from "@/lib/utils";
 
 export default function NewTenantPage() {
   const router = useRouter();
@@ -40,8 +40,8 @@ export default function NewTenantPage() {
       await axios.post("/api/tenants", form);
       router.push("/admin");
       router.refresh();
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Error al crear el tenant");
+    } catch (err) {
+      setError(getErrorMessage(err, "Error al crear el tenant"));
     } finally {
       setLoading(false);
     }

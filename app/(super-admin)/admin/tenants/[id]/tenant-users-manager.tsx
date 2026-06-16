@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { UserCog, UserPlus, KeyRound, Loader2 } from "lucide-react";
-import { getInitials, ROLE_LABELS } from "@/lib/utils";
+import { getInitials, ROLE_LABELS, getErrorMessage } from "@/lib/utils";
 
 interface TenantUser {
   id: string;
@@ -63,8 +63,8 @@ export function TenantUsersManager({ tenantId, users: initialUsers }: TenantUser
       setForm({ name: "", email: "", password: "", role: "STAFF" });
       setAddOpen(false);
       router.refresh();
-    } catch (err: any) {
-      setAddError(err.response?.data?.error || "Error al crear el usuario");
+    } catch (err) {
+      setAddError(getErrorMessage(err, "Error al crear el usuario"));
     } finally {
       setAddLoading(false);
     }
@@ -102,8 +102,8 @@ export function TenantUsersManager({ tenantId, users: initialUsers }: TenantUser
       await axios.patch(`/api/tenants/${tenantId}/users/${resetUserId}`, { password: resetPassword });
       setResetDone(true);
       setResetPassword("");
-    } catch (err: any) {
-      setResetError(err.response?.data?.error || "Error al restablecer la contraseña");
+    } catch (err) {
+      setResetError(getErrorMessage(err, "Error al restablecer la contraseña"));
     } finally {
       setResetLoading(false);
     }

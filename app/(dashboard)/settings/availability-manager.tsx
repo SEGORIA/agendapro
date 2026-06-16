@@ -1,5 +1,7 @@
 "use client";
 
+import { getErrorMessage } from "@/lib/utils";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -48,8 +50,8 @@ export function AvailabilityManager({ initialRules }: { initialRules: DayRule[] 
       await axios.put("/api/availability", rules);
       setSuccess(true);
       router.refresh();
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Error al guardar el horario");
+    } catch (err) {
+      setError(getErrorMessage(err, "Error al guardar el horario"));
     } finally {
       setSaving(false);
     }

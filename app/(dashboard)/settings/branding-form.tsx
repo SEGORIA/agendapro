@@ -6,7 +6,7 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImagePlus, X, Loader2, Check, Building2, Phone } from "lucide-react";
-import { getInitials } from "@/lib/utils";
+import { getInitials, getErrorMessage } from "@/lib/utils";
 
 const MAX_LOGO_BYTES = 1_000_000;
 const MAX_COVER_BYTES = 1_600_000;
@@ -114,8 +114,8 @@ export function BrandingForm({ tenant }: { tenant: TenantBranding }) {
       setCoverChanged(false);
       setSuccess(true);
       router.refresh();
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Error al guardar los cambios");
+    } catch (err) {
+      setError(getErrorMessage(err, "Error al guardar los cambios"));
     } finally {
       setSaving(false);
     }

@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Users, Plus, Phone, Mail, Calendar } from "lucide-react";
 import { getInitials, formatRelative } from "@/lib/utils";
 import Link from "next/link";
@@ -125,7 +124,7 @@ export default async function ClientsPage() {
                   <div className="text-right shrink-0">
                     <div className="flex items-center gap-1 text-slate-400 text-xs">
                       <Calendar className="w-3 h-3" />
-                      {(client as any)._count.appointments} citas
+                      {(client as { _count: { appointments: number } })._count.appointments} citas
                     </div>
                     <p className="text-slate-500 text-xs mt-0.5">{formatRelative(client.createdAt)}</p>
                   </div>

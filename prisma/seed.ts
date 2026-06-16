@@ -151,7 +151,7 @@ async function main() {
           serviceId: service.id,
           staffId: demoAdmin.id,
           startsAt, endsAt,
-          status: a.status as any,
+          status: a.status as "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "NO_SHOW" | "RESCHEDULED",
         },
       });
     }
