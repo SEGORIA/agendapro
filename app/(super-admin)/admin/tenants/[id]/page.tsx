@@ -35,7 +35,7 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
   if (!tenant) notFound();
 
   const bookingUrl = getTenantBookingUrl(tenant.slug);
-  const dashboardUrl = getTenantDashboardUrl(tenant.customDomain);
+  const dashboardUrl = getTenantDashboardUrl(tenant.slug);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-8">
