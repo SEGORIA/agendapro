@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, Clock, TrendingUp, AlertCircle } from "lucide-react";
+import { Calendar, Users, Clock, TrendingUp, AlertCircle, Briefcase, AlarmClock, ArrowRight } from "lucide-react";
 import { formatDate, APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_LABELS } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,8 @@ export default async function DashboardPage() {
     totalClients,
     monthAppointments,
     upcomingAppointments,
+    serviceCount,
+    availabilityCount,
   ] = await Promise.all([
     prisma.appointment.count({
       where: {
@@ -56,6 +58,8 @@ export default async function DashboardPage() {
       orderBy: { startsAt: "asc" },
       take: 8,
     }),
+    prisma.service.count({ where: { tenantId } }),
+    prisma.availabilityRule.count({ where: { tenantId, userId: null, isActive: true } }),
   ]);
 
   const stats = [
@@ -101,6 +105,50 @@ export default async function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Banner de setup incompleto */}
+      {(serviceCount === 0 || availabilityCount === 0) && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="p-5">
+            <div className="flex items-start gap-4">
+              <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-amber-300 font-semibold text-sm">Tu cuenta necesita configuración para recibir reservas</p>
+                <p className="text-amber-400/70 text-xs mt-1">
+                  Los clientes no podrán agendar hasta que completes estos pasos:
+                </p>
+                <div className="mt-3 space-y-2">
+                  {serviceCount === 0 && (
+                    <Link href="/settings" className="flex items-center gap-3 group">
+                      <div className="w-6 h-6 rounded-full border border-amber-500/40 flex items-center justify-center shrink-0">
+                        <Briefcase className="w-3 h-3 text-amber-400" />
+                      </div>
+                      <span className="text-amber-300 text-sm group-hover:text-amber-200 transition-colors">
+                        Agregar servicios — ¿qué ofrecés?
+                      </span>
+                      <ArrowRight className="w-3.5 h-3.5 text-amber-500 group-hover:translate-x-0.5 transition-transform" />
+                    </Link>
+                  )}
+                  {availabilityCount === 0 && (
+                    <Link href="/settings" className="flex items-center gap-3 group">
+                      <div className="w-6 h-6 rounded-full border border-amber-500/40 flex items-center justify-center shrink-0">
+                        <AlarmClock className="w-3 h-3 text-amber-400" />
+                      </div>
+                      <span className="text-amber-300 text-sm group-hover:text-amber-200 transition-colors">
+                        Definir horarios de atención — ¿cuándo estás disponible?
+                      </span>
+                      <ArrowRight className="w-3.5 h-3.5 text-amber-500 group-hover:translate-x-0.5 transition-transform" />
+                    </Link>
+                  )}
+                </div>
+                <Link href="/settings" className="mt-4 inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors">
+                  Ir a Configuración <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Próximas citas */}
       <Card className="bg-slate-800/50 border-slate-700">

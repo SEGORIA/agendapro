@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Calendar, Users, LayoutDashboard, Settings,
-  Zap, LogOut, Building2, Plus, ArrowLeft
+  Zap, LogOut, ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -17,11 +17,6 @@ const tenantNavItems = [
   { href: "/clients", label: "Clientes / CRM", icon: Users },
   { href: "/automations", label: "Automatizaciones", icon: Zap },
   { href: "/settings", label: "Configuración", icon: Settings },
-];
-
-const superAdminNavItems = [
-  { href: "/admin", label: "Panel global", icon: LayoutDashboard },
-  { href: "/admin/tenants/new", label: "Nuevo cliente", icon: Plus },
 ];
 
 interface SidebarProps {
@@ -45,11 +40,7 @@ export function Sidebar({ tenant, user, role, impersonating }: SidebarProps) {
 
   const isSuperAdminMode = role === "SUPER_ADMIN" && !impersonating;
 
-  const items = isSuperAdminMode
-    ? superAdminNavItems
-    : role === "SUPER_ADMIN"
-      ? [...tenantNavItems, { href: "/admin", label: "Super Admin", icon: Building2 }]
-      : tenantNavItems;
+  const items = tenantNavItems;
 
   return (
     <aside className="flex flex-col w-64 h-screen bg-slate-950 border-r border-slate-800 sticky top-0 shrink-0">
