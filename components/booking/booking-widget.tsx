@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2, Clock, ChevronLeft, ChevronRight, CheckCircle, Globe, ArrowLeft, Calendar as CalendarIcon, User } from "lucide-react";
 import {
   format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval,
@@ -68,8 +69,6 @@ export function BookingWidget({ tenant, services, staff, availableWeekdays, cont
 
   const [viewMonth, setViewMonth] = useState(startOfMonth(today));
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [slots, setSlots] = useState<Slot[]>([]);
-  const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
   const [info, setInfo] = useState({ name: "", email: "", phone: "", notes: "" });
@@ -95,23 +94,18 @@ export function BookingWidget({ tenant, services, staff, availableWeekdays, cont
     return availableWeekdays.includes(getDay(day)) && !isBefore(day, today);
   }
 
-  // Cargar slots reales cuando cambia servicio/fecha/staff
-  useEffect(() => {
-    if (!service || !selectedDate) return;
-    setSlotsLoading(true);
-    setSelectedSlot(null);
-    const params = new URLSearchParams({
-      tenantId: tenant.id,
-      serviceId: service.id,
-      date: format(selectedDate, "yyyy-MM-dd"),
-    });
-    if (selectedStaff) params.set("staffId", selectedStaff.id);
-    axios
-      .get(`/api/slots?${params}`)
-      .then((res) => setSlots((res.data.data as Slot[]).filter((s) => s.available)))
-      .catch(() => setSlots([]))
-      .finally(() => setSlotsLoading(false));
-  }, [service, selectedDate, selectedStaff, tenant.id]);
+  // Slots reales desde la API, con caché por servicio/fecha/staff (React Query)
+  const slotsDate = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+  const { data: slots = [], isFetching: slotsLoading } = useQuery({
+    queryKey: ["public-slots", tenant.id, service?.id, slotsDate, selectedStaff?.id],
+    queryFn: async () => {
+      const params = new URLSearchParams({ tenantId: tenant.id, serviceId: service!.id, date: slotsDate! });
+      if (selectedStaff) params.set("staffId", selectedStaff.id);
+      const res = await axios.get(`/api/slots?${params}`);
+      return (res.data.data as Slot[]).filter((s) => s.available);
+    },
+    enabled: !!service && !!selectedDate,
+  });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -384,7 +378,7 @@ export function BookingWidget({ tenant, services, staff, availableWeekdays, cont
                     {staff.map((s) => (
                       <button
                         key={s.id}
-                        onClick={() => setSelectedStaff(selectedStaff?.id === s.id ? null : s)}
+                        onClick={() => { setSelectedStaff(selectedStaff?.id === s.id ? null : s); setSelectedSlot(null); }}
                         className="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
                         style={
                           selectedStaff?.id === s.id
@@ -436,7 +430,7 @@ export function BookingWidget({ tenant, services, staff, availableWeekdays, cont
                     return (
                       <button
                         key={day.toISOString()}
-                        onClick={() => enabled && setSelectedDate(day)}
+                        onClick={() => { if (enabled) { setSelectedDate(day); setSelectedSlot(null); } }}
                         disabled={!enabled}
                         className="relative aspect-square rounded-full text-sm font-semibold transition-colors flex items-center justify-center disabled:cursor-default"
                         style={

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,8 +70,6 @@ export function NewAppointmentForm({
   // Fecha / hora
   const availableDays = useMemo(() => Array.from({ length: 14 }, (_, i) => addDays(startOfDay(new Date()), i)), []);
   const [selectedDate, setSelectedDate] = useState<Date>(availableDays[0]);
-  const [slots, setSlots] = useState<Slot[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
   const [notes, setNotes] = useState("");
@@ -83,23 +82,17 @@ export function NewAppointmentForm({
     ).slice(0, 8);
   }, [clientSearch, clients]);
 
-  useEffect(() => {
-    if (!serviceId) return;
-    setLoadingSlots(true);
-    setSelectedSlot(null);
-    axios
-      .get("/api/slots", {
-        params: {
-          tenantId,
-          serviceId,
-          date: format(selectedDate, "yyyy-MM-dd"),
-          ...(staffId ? { staffId } : {}),
-        },
-      })
-      .then((res) => setSlots(res.data.data))
-      .catch(() => setSlots([]))
-      .finally(() => setLoadingSlots(false));
-  }, [serviceId, staffId, selectedDate, tenantId]);
+  const slotsDate = format(selectedDate, "yyyy-MM-dd");
+  const { data: slots = [], isFetching: loadingSlots } = useQuery({
+    queryKey: ["admin-slots", tenantId, serviceId, slotsDate, staffId || null],
+    queryFn: async () => {
+      const res = await axios.get("/api/slots", {
+        params: { tenantId, serviceId, date: slotsDate, ...(staffId ? { staffId } : {}) },
+      });
+      return res.data.data as Slot[];
+    },
+    enabled: !!serviceId,
+  });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -257,7 +250,7 @@ export function NewAppointmentForm({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-slate-400 text-xs block mb-1.5">Servicio</label>
-                <Select value={serviceId} onValueChange={setServiceId}>
+                <Select value={serviceId} onValueChange={(v) => { setServiceId(v); setSelectedSlot(null); }}>
                   <SelectTrigger className="bg-slate-900/50 border-slate-700 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -273,7 +266,7 @@ export function NewAppointmentForm({
               {staff.length > 0 && (
                 <div>
                   <label className="text-slate-400 text-xs block mb-1.5">Atendido por</label>
-                  <Select value={staffId || "any"} onValueChange={(v) => setStaffId(v === "any" ? "" : v)}>
+                  <Select value={staffId || "any"} onValueChange={(v) => { setStaffId(v === "any" ? "" : v); setSelectedSlot(null); }}>
                     <SelectTrigger className="bg-slate-900/50 border-slate-700 text-white">
                       <SelectValue />
                     </SelectTrigger>
@@ -301,7 +294,7 @@ export function NewAppointmentForm({
               <button
                 key={day.toISOString()}
                 type="button"
-                onClick={() => setSelectedDate(day)}
+                onClick={() => { setSelectedDate(day); setSelectedSlot(null); }}
                 className={`flex flex-col items-center p-2 rounded-xl transition-colors ${
                   selectedDate.toDateString() === day.toDateString()
                     ? "bg-purple-600 text-white"

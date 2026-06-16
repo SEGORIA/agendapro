@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { Bell, Calendar, CalendarCheck, CalendarX, CheckCheck, Loader2 } from "lucide-react";
 import { cn, formatRelative } from "@/lib/utils";
@@ -15,6 +16,8 @@ interface NotificationItem {
   isRead: boolean;
   createdAt: string;
 }
+
+type NotifData = { data: NotificationItem[]; unreadCount: number };
 
 const TYPE_ICONS: Record<string, React.ElementType> = {
   "appointment.created": Calendar,
@@ -32,29 +35,20 @@ const TYPE_COLORS: Record<string, string> = {
 
 export function NotificationBell() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<NotificationItem[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
   const ref = useRef<HTMLDivElement>(null);
 
-  async function load() {
-    try {
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
       const res = await axios.get("/api/notifications");
-      setItems(res.data.data);
-      setUnreadCount(res.data.unreadCount);
-    } catch {
-      // silencioso
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    load();
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
-  }, []);
+      return res.data as NotifData;
+    },
+    refetchInterval: 30_000,
+  });
+  const items = data?.data ?? [];
+  const unreadCount = data?.unreadCount ?? 0;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -66,19 +60,26 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  async function handleOpenItem(item: NotificationItem) {
+  function handleOpenItem(item: NotificationItem) {
     if (!item.isRead) {
-      setItems((prev) => prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n)));
-      setUnreadCount((c) => Math.max(0, c - 1));
+      queryClient.setQueryData<NotifData>(["notifications"], (old) =>
+        old
+          ? {
+              data: old.data.map((n) => (n.id === item.id ? { ...n, isRead: true } : n)),
+              unreadCount: Math.max(0, old.unreadCount - 1),
+            }
+          : old
+      );
       axios.patch(`/api/notifications/${item.id}`).catch(() => {});
     }
     setOpen(false);
     if (item.link) router.push(item.link);
   }
 
-  async function handleMarkAllRead() {
-    setItems((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    setUnreadCount(0);
+  function handleMarkAllRead() {
+    queryClient.setQueryData<NotifData>(["notifications"], (old) =>
+      old ? { data: old.data.map((n) => ({ ...n, isRead: true })), unreadCount: 0 } : old
+    );
     axios.patch("/api/notifications").catch(() => {});
   }
 

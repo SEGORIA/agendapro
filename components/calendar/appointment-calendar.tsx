@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import {
   startOfWeek, startOfDay, addDays, addWeeks, format, isSameDay, isToday,
@@ -70,8 +71,7 @@ export function AppointmentCalendar() {
   const router = useRouter();
   const [view, setView] = useState<View>("week");
   const [cursor, setCursor] = useState(() => new Date());
-  const [appointments, setAppointments] = useState<Appt[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [nowTick, setNowTick] = useState(() => Date.now());
 
   const daysRef = useRef<HTMLDivElement>(null);
@@ -84,27 +84,23 @@ export function AppointmentCalendar() {
     return Array.from({ length: 7 }, (_, i) => addDays(ws, i));
   }, [view, cursor]);
 
-  // Rango como strings ISO (primitivos estables) para no recrear fetchAppointments cada render
+  // Rango como strings ISO (primitivos estables) para la query key
   const { fromISO, toISO } = useMemo(() => ({
     fromISO: days[0].toISOString(),
     toISO: addDays(days[days.length - 1], 1).toISOString(),
   }), [days]);
 
-  const fetchAppointments = useCallback(async () => {
-    setLoading(true);
-    try {
+  const apptQueryKey = ["appointments-calendar", fromISO, toISO];
+
+  const { data: appointments = [], isFetching: loading } = useQuery({
+    queryKey: apptQueryKey,
+    queryFn: async () => {
       const { data } = await axios.get("/api/appointments/calendar", {
         params: { from: fromISO, to: toISO },
       });
-      setAppointments(data.data);
-    } catch {
-      setAppointments([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [fromISO, toISO]);
-
-  useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
+      return data.data as Appt[];
+    },
+  });
 
   // Reloj para la línea de "ahora"
   useEffect(() => {
@@ -184,16 +180,18 @@ export function AppointmentCalendar() {
     // Sin cambio real → no hacer nada
     if (newStart.getTime() === new Date(apt.startsAt).getTime()) return;
 
-    // Update optimista
+    // Update optimista en la caché de React Query
     const newEnd = new Date(newStart.getTime() + drag.durationMin * 60000);
-    setAppointments((prev) =>
-      prev.map((a) => (a.id === apt.id ? { ...a, startsAt: newStart.toISOString(), endsAt: newEnd.toISOString() } : a))
+    queryClient.setQueryData<Appt[]>(apptQueryKey, (prev) =>
+      prev
+        ? prev.map((a) => (a.id === apt.id ? { ...a, startsAt: newStart.toISOString(), endsAt: newEnd.toISOString() } : a))
+        : prev
     );
 
     try {
       await axios.patch(`/api/appointments/${apt.id}`, { startsAt: newStart.toISOString() });
     } catch {
-      fetchAppointments(); // revertir desde el servidor si falla
+      queryClient.invalidateQueries({ queryKey: apptQueryKey }); // revertir desde el servidor si falla
     }
   };
 
