@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Users, Calendar, Briefcase, UserCog, ExternalLink, AlertTriangle, Link2, Globe, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { getTenantBookingUrl } from "@/lib/tenant";
+import { getTenantBookingUrl, getTenantDashboardUrl } from "@/lib/tenant";
 import { TenantEditForm } from "./tenant-edit-form";
 import { TenantUsersManager } from "./tenant-users-manager";
 import { DangerZone } from "./danger-zone";
@@ -35,6 +35,7 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
   if (!tenant) notFound();
 
   const bookingUrl = getTenantBookingUrl(tenant.slug);
+  const dashboardUrl = getTenantDashboardUrl(tenant.customDomain);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-8">
@@ -118,9 +119,10 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
               <LayoutDashboard className="w-4 h-4 text-slate-400 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-slate-500 text-xs mb-0.5">Panel de administración del cliente</p>
-                <p className="text-slate-400 text-sm">Requiere entrar como el cliente</p>
+                <p className="text-slate-200 text-sm font-mono truncate">{dashboardUrl}</p>
               </div>
-              <ImpersonateButton tenantId={tenant.id} label="Ir al dashboard" />
+              <CopyButton text={dashboardUrl} />
+              <ImpersonateButton tenantId={tenant.id} label="Entrar" />
             </div>
           </CardContent>
         </Card>

@@ -54,3 +54,15 @@ export function getTenantBookingUrl(slug: string): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   return `${appUrl}/booking/${slug}`;
 }
+
+/**
+ * Genera la URL del dashboard de un tenant.
+ * Si tiene dominio personalizado, lo usa; si no, usa el dominio base de la app.
+ */
+export function getTenantDashboardUrl(customDomain?: string | null): string {
+  if (customDomain) {
+    return `https://${customDomain}/dashboard`;
+  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return `${appUrl}/dashboard`;
+}
