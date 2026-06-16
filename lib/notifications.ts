@@ -4,13 +4,15 @@ export type NotificationType =
   | "appointment.created"
   | "appointment.confirmed"
   | "appointment.cancelled"
-  | "appointment.completed";
+  | "appointment.completed"
+  | "appointment.rescheduled";
 
 export const NOTIFICATION_LABELS: Record<NotificationType, string> = {
   "appointment.created": "Nueva cita",
   "appointment.confirmed": "Cita confirmada",
   "appointment.cancelled": "Cita cancelada",
   "appointment.completed": "Cita completada",
+  "appointment.rescheduled": "Cita reprogramada",
 };
 
 interface CreateNotificationInput {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { addMinutes } from "date-fns";
 import { createNotification, type NotificationType } from "@/lib/notifications";
 
 const STATUS_NOTIFICATIONS: Partial<Record<string, { type: NotificationType; title: string }>> = {
@@ -15,6 +16,7 @@ const updateSchema = z.object({
   notes: z.string().optional(),
   meetingUrl: z.string().url().optional(),
   staffId: z.string().optional(),
+  startsAt: z.string().datetime().optional(),
 });
 
 // GET /api/appointments/[id]
@@ -47,13 +49,39 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   try {
     const body = await req.json();
-    const data = updateSchema.parse(body);
+    const { startsAt, ...data } = updateSchema.parse(body);
+
+    // Reprogramación: recalcular endsAt según la duración del servicio
+    const reschedule: { startsAt?: Date; endsAt?: Date } = {};
+    if (startsAt) {
+      const current = await prisma.appointment.findUnique({
+        where: { id, tenantId: session.user.tenantId },
+        include: { service: true },
+      });
+      if (!current) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+
+      const newStart = new Date(startsAt);
+      const durationMin =
+        current.service?.durationMin ??
+        Math.max(15, Math.round((current.endsAt.getTime() - current.startsAt.getTime()) / 60000));
+      reschedule.startsAt = newStart;
+      reschedule.endsAt = addMinutes(newStart, durationMin);
+    }
 
     const appointment = await prisma.appointment.update({
       where: { id, tenantId: session.user.tenantId },
-      data,
+      data: { ...data, ...reschedule },
       include: { client: true, service: true },
     });
+
+    if (startsAt) {
+      await createNotification(session.user.tenantId, {
+        type: "appointment.rescheduled",
+        title: "Cita reprogramada",
+        message: `${appointment.client.name} · ${appointment.service?.name || "Cita"}`,
+        link: `/appointments/${appointment.id}`,
+      });
+    }
 
     if (data.status) {
       const notif = STATUS_NOTIFICATIONS[data.status];

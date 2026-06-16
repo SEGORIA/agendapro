@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_LABELS, formatDate } from "@/lib/utils";
 import { Calendar, Plus, Video } from "lucide-react";
 import Link from "next/link";
+import { AppointmentsView } from "./appointments-view";
 
 export default async function AppointmentsPage() {
   const session = await auth();
@@ -40,6 +41,9 @@ export default async function AppointmentsPage() {
         </Link>
       </div>
 
+      <AppointmentsView
+        listContent={
+          <>
       {/* Resumen por estado */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {Object.entries(statusGroups).map(([status, items]) => (
@@ -119,6 +123,9 @@ export default async function AppointmentsPage() {
           )}
         </CardContent>
       </Card>
+          </>
+        }
+      />
     </div>
   );
 }
