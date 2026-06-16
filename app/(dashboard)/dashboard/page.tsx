@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, Clock, TrendingUp, AlertCircle, Briefcase, AlarmClock, ArrowRight } from "lucide-react";
+import { Calendar, Users, Clock, TrendingUp, AlertCircle, Briefcase, AlarmClock } from "lucide-react";
 import { formatDate, APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_LABELS } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -106,49 +106,83 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {/* Banner de setup incompleto */}
-      {(serviceCount === 0 || availabilityCount === 0) && (
-        <Card className="border-amber-500/30 bg-amber-500/5">
-          <CardContent className="p-5">
-            <div className="flex items-start gap-4">
-              <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-amber-300 font-semibold text-sm">Tu cuenta necesita configuración para recibir reservas</p>
-                <p className="text-amber-400/70 text-xs mt-1">
-                  Los clientes no podrán agendar hasta que completes estos pasos:
-                </p>
-                <div className="mt-3 space-y-2">
-                  {serviceCount === 0 && (
-                    <Link href="/settings" className="flex items-center gap-3 group">
-                      <div className="w-6 h-6 rounded-full border border-amber-500/40 flex items-center justify-center shrink-0">
-                        <Briefcase className="w-3 h-3 text-amber-400" />
-                      </div>
-                      <span className="text-amber-300 text-sm group-hover:text-amber-200 transition-colors">
-                        Agregar servicios — ¿qué ofrecés?
-                      </span>
-                      <ArrowRight className="w-3.5 h-3.5 text-amber-500 group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
-                  )}
-                  {availabilityCount === 0 && (
-                    <Link href="/settings" className="flex items-center gap-3 group">
-                      <div className="w-6 h-6 rounded-full border border-amber-500/40 flex items-center justify-center shrink-0">
-                        <AlarmClock className="w-3 h-3 text-amber-400" />
-                      </div>
-                      <span className="text-amber-300 text-sm group-hover:text-amber-200 transition-colors">
-                        Definir horarios de atención — ¿cuándo estás disponible?
-                      </span>
-                      <ArrowRight className="w-3.5 h-3.5 text-amber-500 group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
-                  )}
+      {/* Servicios y Horarios — acceso rápido */}
+      <div>
+        <h2 className="text-white text-sm font-semibold mb-3 text-slate-300">Mi negocio</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          {/* Servicios */}
+          <Card className={`border-slate-700 ${serviceCount === 0 ? "bg-amber-500/5 border-amber-500/20" : "bg-slate-800/50"}`}>
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-blue-500/10 rounded-lg shrink-0">
+                    <Briefcase className="w-4 h-4 text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-semibold">Servicios</p>
+                    <p className="text-slate-400 text-xs">
+                      {serviceCount === 0 ? "Sin servicios aún" : `${serviceCount} ${serviceCount === 1 ? "servicio" : "servicios"}`}
+                    </p>
+                  </div>
                 </div>
-                <Link href="/settings" className="mt-4 inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors">
-                  Ir a Configuración <ArrowRight className="w-3 h-3" />
-                </Link>
+                {serviceCount === 0 && (
+                  <span className="text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full shrink-0">Pendiente</span>
+                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              <p className="text-slate-400 text-xs mb-4 leading-relaxed">
+                {serviceCount === 0
+                  ? "Agrega los servicios que ofrecés: nombre, precio, duración e imagen."
+                  : "Gestiona tus servicios, precios, duraciones e imágenes."}
+              </p>
+              <Link href="/settings#servicios">
+                <Button size="sm" variant={serviceCount === 0 ? "default" : "outline"}
+                  className={serviceCount === 0
+                    ? "w-full bg-purple-600 hover:bg-purple-500 text-white text-xs"
+                    : "w-full border-slate-600 text-slate-300 hover:bg-slate-700 text-xs"}>
+                  {serviceCount === 0 ? "+ Agregar primer servicio" : "Gestionar servicios"}
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Horarios */}
+          <Card className={`border-slate-700 ${availabilityCount === 0 ? "bg-amber-500/5 border-amber-500/20" : "bg-slate-800/50"}`}>
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-yellow-500/10 rounded-lg shrink-0">
+                    <AlarmClock className="w-4 h-4 text-yellow-400" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-semibold">Horarios</p>
+                    <p className="text-slate-400 text-xs">
+                      {availabilityCount === 0 ? "Sin días activos" : `${availabilityCount} ${availabilityCount === 1 ? "día activo" : "días activos"}`}
+                    </p>
+                  </div>
+                </div>
+                {availabilityCount === 0 && (
+                  <span className="text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full shrink-0">Pendiente</span>
+                )}
+              </div>
+              <p className="text-slate-400 text-xs mb-4 leading-relaxed">
+                {availabilityCount === 0
+                  ? "Define los días y horarios en que atendés para que el calendario funcione."
+                  : "Ajusta los días y horarios en que tus clientes pueden agendar citas."}
+              </p>
+              <Link href="/settings#horarios">
+                <Button size="sm" variant={availabilityCount === 0 ? "default" : "outline"}
+                  className={availabilityCount === 0
+                    ? "w-full bg-purple-600 hover:bg-purple-500 text-white text-xs"
+                    : "w-full border-slate-600 text-slate-300 hover:bg-slate-700 text-xs"}>
+                  {availabilityCount === 0 ? "Configurar horarios" : "Editar horarios"}
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+        </div>
+      </div>
 
       {/* Próximas citas */}
       <Card className="bg-slate-800/50 border-slate-700">

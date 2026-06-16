@@ -109,7 +109,7 @@ export default async function SettingsPage() {
       </Card>
 
       {/* Horario de atención */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card id="horarios" className="bg-slate-800/50 border-slate-700">
         <CardHeader>
           <CardTitle className="text-white text-base flex items-center gap-2">
             <Clock className="w-4 h-4 text-yellow-400" />
@@ -125,7 +125,7 @@ export default async function SettingsPage() {
       </Card>
 
       {/* Servicios */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card id="servicios" className="bg-slate-800/50 border-slate-700">
         <CardHeader>
           <CardTitle className="text-white text-base flex items-center gap-2">
             <Settings className="w-4 h-4 text-blue-400" />
