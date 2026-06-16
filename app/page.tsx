@@ -107,7 +107,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-white/10 py-8 text-center text-white/30 text-sm">
-        <p>© 2025 AgendaPro — Construido con Next.js + Prisma</p>
+        <p>© 2026 AgendaPro · Construido por Alma Agencia Creativa</p>
       </footer>
     </main>
   );
