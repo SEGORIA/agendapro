@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Plus, Building2, LogOut } from "lucide-react";
+import { LayoutDashboard, Plus, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -59,19 +59,6 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
           );
         })}
 
-        <p className="text-slate-600 text-xs font-semibold uppercase tracking-wider px-3 pt-4 pb-1">
-          Clientes
-        </p>
-        <Link
-          href="/admin"
-          className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-            "text-slate-400 hover:text-white hover:bg-slate-800"
-          )}
-        >
-          <Building2 className="w-4 h-4 shrink-0" />
-          Ver todos los tenants
-        </Link>
       </nav>
 
       {/* User */}
