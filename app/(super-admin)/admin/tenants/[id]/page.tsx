@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Users, Calendar, Briefcase, UserCog, ExternalLink, AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { SessionProvider } from "next-auth/react";
 import { getTenantBookingUrl } from "@/lib/tenant";
 import { TenantEditForm } from "./tenant-edit-form";
 import { TenantUsersManager } from "./tenant-users-manager";
@@ -37,7 +36,6 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
   const bookingUrl = getTenantBookingUrl(tenant.slug);
 
   return (
-    <SessionProvider session={session}>
     <div className="min-h-screen bg-slate-950 text-white p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
@@ -127,6 +125,5 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
         <DangerZone tenant={{ id: tenant.id, slug: tenant.slug, name: tenant.name }} />
       </div>
     </div>
-    </SessionProvider>
   );
 }

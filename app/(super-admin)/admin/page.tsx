@@ -9,7 +9,6 @@ import {
   TrendingUp, Clock, ExternalLink, Activity
 } from "lucide-react";
 import Link from "next/link";
-import { SessionProvider } from "next-auth/react";
 import { TenantList } from "./tenant-list";
 import { ImpersonateButton } from "./impersonate-button";
 import { startOfDay, endOfDay, startOfMonth, endOfMonth, format } from "date-fns";
@@ -76,12 +75,11 @@ export default async function SuperAdminPage() {
   };
 
   return (
-    <SessionProvider session={session}>
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <div className="border-b border-slate-800 px-8 py-5 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">Panel de control — AgendaPro</h1>
+          <h1 className="text-xl font-bold">Panel de control</h1>
           <p className="text-slate-400 text-sm capitalize">
             {format(now, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
           </p>
@@ -266,6 +264,5 @@ export default async function SuperAdminPage() {
         </Card>
       </div>
     </div>
-    </SessionProvider>
   );
 }
